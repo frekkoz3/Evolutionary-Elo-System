@@ -1,4 +1,4 @@
-# 🧬​ EVOLUTIONARY RANKING SYSTEM
+# 🧬​ EVOLUTIONARY ELO SYSTEM (EvES)
 
 If you are here for the **OPTIMIZATION FOR AI** course [read here first](#-optimization-for-ai-submission).
 

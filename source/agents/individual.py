@@ -62,6 +62,9 @@ class Individual():
     def update(self, **kwrags):
         pass
 
+    def mutate(self, **kwargs):
+        pass
+
     def save(self):
         pass
 

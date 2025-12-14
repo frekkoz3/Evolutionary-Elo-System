@@ -50,8 +50,8 @@ def play_boxing(players = [RandomIndividual(), RandomIndividual()], render_mode 
             action_b = players[1].move(np.array(obs_b), env, eval_mode)
         
         new_obs, (r_a, r_b), done, truncated, info = env.step((action_a, action_b))
-        action_a = info['a1']
-        action_b = info['a2']
+        """action_a = info['a1']
+        action_b = info['a2']"""
         new_obs_a = env.get_obs('p1')
         new_obs_b = env.get_obs('p2')
 

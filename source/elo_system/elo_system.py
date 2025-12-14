@@ -60,7 +60,12 @@ class EES():
 
         if player_class == DQNAgent:
             env = kwargs["env"]
-            players = [DQNAgent(n_actions = env.action_space.n, n_observations = env.observation_space.shape[0]) for _ in range (self.n_individuals)]
+            name = "boxing"
+            players = [DQNAgent.load(os.path.join(INDIVIDUALS_DIR, f"{name}{random.randint(1, 2)}.pth")) for _ in range (self.n_individuals)]
+            for i, p in enumerate(players):
+                players[i].mutate()
+                players[i].reset_elo()
+            #players = [DQNAgent(n_actions = env.action_space.n, n_observations = env.observation_space.shape[0]) for _ in range (self.n_individuals)]
         elif player_class == GNGDQNAgent:
             env = kwargs["env"]
             players = [GNGDQNAgent(DQNAgent(n_actions = env.action_space.n, n_observations = env.observation_space.shape[0]), DQNAgent(n_actions = env.action_space.n, n_observations = env.observation_space.shape[0])) for _ in range (self.n_individuals)]
@@ -76,7 +81,7 @@ class EES():
 
         k_step = (self.max_k - self.min_k) / self.n_seasons
 
-        for season in range (442, self.n_seasons):
+        for season in range (0, self.n_seasons):
             # --- ONLINE OPTIMIZATION (RL or whatever) --  
             for r in tqdm(range (self.n_rounds), desc=f"Season {season + 1} | {self.n_seasons}", unit="round"):
                 if self.parallel:
@@ -87,7 +92,7 @@ class EES():
             # --- SAVING INDIVIDUALS --- 
             print("Saving and mutating individuals...")
             for player in players:
-                player.save(os.path.join(INDIVIDUALS_DIR, f"{season}_{player.id}.pth"))
+                player.save(os.path.join(INDIVIDUALS_DIR, f"{season}_boxing{player.id}.pth"))
             print("Individuals saved")
 
             # --- OFFLINE OPTIMIZATION (evolutionary strategy) ---
@@ -96,7 +101,7 @@ class EES():
             for _ in range (self.n_individuals - self.elitism):
                 # tplayer = match_selection(players, play_fun, t_k) # this selection is based on an empirical montecarlo approach
                 tplayer = tournament_selection(players, self.t_k)
-                player = tplayer.__class__.load(os.path.join(INDIVIDUALS_DIR, f"{season}_{tplayer.id}.pth"))
+                player = tplayer.__class__.load(os.path.join(INDIVIDUALS_DIR, f"{season}_boxing{tplayer.id}.pth"))
                 player.mutate()
                 new_players.append(player)
 

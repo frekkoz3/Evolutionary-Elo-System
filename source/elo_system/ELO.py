@@ -57,7 +57,7 @@ def return_function(elo_x, elo_y, result, k : int = 20, lam : int = 400):
     
     p_x , p_y = compute_winning_probability(elo_x, elo_y, lam)
     new_elo_x = elo_x + k*(result[0] - p_x)
-    new_elo_y = elo_y + k*(result[0] - p_y)
+    new_elo_y = elo_y + k*(result[1] - p_y)
 
     return new_elo_x, new_elo_y
 

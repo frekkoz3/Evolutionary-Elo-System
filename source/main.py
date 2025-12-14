@@ -22,8 +22,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Add arguments
-    parser.add_argument("--test", type=bool, default=True, help="test mode")
-    parser.add_argument("--train", type=bool, default=False, help="train mode")
+    parser.add_argument("--test", type=bool, default=False, help="test mode")
+    parser.add_argument("--train", type=bool, default=True, help="train mode")
     parser.add_argument("--h", type=bool, default=False, help="help message")
 
     # Parse

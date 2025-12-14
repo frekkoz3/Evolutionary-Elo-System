@@ -21,18 +21,16 @@ class DQN(nn.Module):
 
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 256)
-        self.layer2 = nn.Linear(256, 128)
-        self.layer3 = nn.Linear(128, 64)
-        self.layer4 = nn.Linear(64, n_actions)
+        self.layer1 = nn.Linear(n_observations, 128)
+        self.layer2 = nn.Linear(128, 64)
+        self.layer3 = nn.Linear(64, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization.
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        x = F.relu(self.layer3(x))
-        return self.layer4(x)
+        return self.layer3(x)
     
 # BATCH_SIZE is the number of transitions sampled from the replay buffer
 # GAMMA is the discount factor
@@ -43,18 +41,19 @@ class DQN(nn.Module):
 # LR is the learning rate of the ``AdamW`` optimizer
 
 BATCH_SIZE = 128
+UPDATE_WAITING = 128
 GAMMA = 0.99
 EPS_START = 0.9
-EPS_END = 0.05
+EPS_END = 0.1
 FPS = 60
-MAXIMUM_TIME = 30
-MINIMUM_N_GAMES = 600
+MAXIMUM_TIME = 120
+MINIMUM_N_GAMES = 800
 DEFAULT_N_GAMES_RESET = 50
-EPS_DECAY = FPS*MAXIMUM_TIME*MINIMUM_N_GAMES # fps * maximum time * minimum number of game to learn
-TAU = 0.005
+EPS_DECAY = FPS*MAXIMUM_TIME*MINIMUM_N_GAMES*2 # fps * maximum time * minimum number of game to learn * 2 (both sides)
+TAU = 0.005 #  A little higher since i update the network once every UPDATE_WAITING steps
 LR = 3e-3
-REPLAY_SECOND = 60
-REPLAY_SIZE = FPS*REPLAY_SECOND # first 60 seconds of a game
+REPLAY_SECOND = 180
+REPLAY_SIZE = FPS*REPLAY_SECOND # first 180 seconds of a game
 
 class DQNAgent(Individual):
     
@@ -95,7 +94,7 @@ class DQNAgent(Individual):
         eps_threshold = EPS_START - (EPS_START - EPS_END) * (self.steps_done / EPS_DECAY)
         eps_threshold = max(EPS_END, eps_threshold)  # clamp so it doesn't go below end
         self.steps_done = min(self.steps_done + 1, EPS_DECAY) if not eval_mode else self.steps_done # to prevent overflow
-        if sample > eps_threshold:
+        if sample > eps_threshold: #or eval_mode:
             with torch.no_grad():
                 # torch.argmax().item() will return the index of the maximum
                 act = torch.argmax(self.policy_net(state)).item()
@@ -117,7 +116,7 @@ class DQNAgent(Individual):
 
         self.update_t += 1
 
-        if self.update_t%BATCH_SIZE != 0: # update only once every batch size steps
+        if self.update_t%UPDATE_WAITING != 0: # update only once every UPDATE_WAITING steps
             return
 
         if len(self.memory) < BATCH_SIZE:
@@ -143,10 +142,7 @@ class DQNAgent(Individual):
         # Compute target Q-values
         # ------------------------------
         with torch.no_grad():
-            self.policy_net.eval() # This is needed if I'll ever add some dropout or other in-train techinques
-            next_actions = self.policy_net(next_state_batch).argmax(dim=1) # B
-            self.policy_net.train()
-            next_q_values = self.target_net(next_state_batch).gather(1, next_actions.unsqueeze(1)).squeeze(1) # B
+            next_q_values = self.target_net(next_state_batch).max(dim=1)[0] # [B] 
             target_q_values = reward_batch.squeeze(1) + GAMMA * next_q_values * (1 - done_batch) # [B]
 
         # ------------------------------
@@ -222,4 +218,4 @@ class DQNAgent(Individual):
                     p.add_(torch.randn_like(p) * scale)
         perturb_model(self.policy_net, scale=policy_scale)
         perturb_model(self.target_net, scale=target_scale)
-        self.reset(percentage=0.75)
+        self.reset(percentage=0.5)

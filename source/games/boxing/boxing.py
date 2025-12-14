@@ -20,6 +20,7 @@ from source.games import UserClosingWindowException
 FPS = 60
 FRAME_DELAY = 1 # frame to wait between each decision -> this must be set also in the individual 
 MAXIMUM_TIME = 120 # time in second
+MAX_POINTS = 15
 # the total maximum time in terms of time step is maximum_time * fps // frame_delay 
 
 # ===========================================================
@@ -166,12 +167,14 @@ class BoxingEnv(gym.Env):
         if legit_movement(self.p1, self.p2, a1):
             self.p1.move(a1)
         else:
+            reward_p1 = -10
             self.p1.move(0)
             info['a1'] = 0
 
         if legit_movement(self.p2, self.p1, a2):
             self.p2.move(a2)
         else:
+            reward_p2 -= 10
             self.p2.move(0)
             info['a2'] = 0
 
@@ -215,15 +218,14 @@ class BoxingEnv(gym.Env):
             # Euclidean distance
             return (dx*dx + dy*dy) ** 0.5
 
-
         def hit_detection(p1 : Boxer, p2 : Boxer):
             if p1.hitbox and p1.hitbox.colliderect(p2.get_rect()):
                 if p2.state == 1: # combo reset
                     p2.cancel_punch()
                 p1.score += 1
-                return 100, 0 # this should penalize more when the score are near
+                return 10, 0 # this should penalize more when the score are near
             if p1.hitbox and not p1.hitbox.colliderect(p2.get_rect()):
-                return -rect_distance(p1.hitbox, p2.get_rect()), 0 # penalizing missed punches  
+                return -1, 0 # penalizing missed punches  
             return 0, 0
         
         t1, t2 = hit_detection(self.p1, self.p2)
@@ -244,15 +246,15 @@ class BoxingEnv(gym.Env):
         # -------------------------------
         terminated, truncated = False, False
         self.time += 1
-        if self.p1.score >= 100 or self.p2.score >= 100 or self.time >= MAXIMUM_TIME * FPS // FRAME_DELAY:
+        if self.p1.score >= MAX_POINTS or self.p2.score >= MAX_POINTS or self.time >= MAXIMUM_TIME * FPS // FRAME_DELAY:
             terminated = True
             truncated = True
             if self.p1.score > self.p2.score:
-                reward_p1 = 1000
+                reward_p1 = 100
                 reward_p2 = -100
             elif self.p2.score > self.p1.score:
                 reward_p1 = -100
-                reward_p2 = 1000
+                reward_p2 = 100
             else:
                 reward_p1 = -100
                 reward_p2 = -100

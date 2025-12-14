@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # Parse
     args = parser.parse_args()
 
-    name = "boxing"
+    name = "boxing1"
     p1_v, p2_v = args.v1, args.v2
     human = args.human
     p1 = DQNAgent.load(os.path.join(DQN_PLAYERS_ROOT, f"p1_{name}_{p1_v}.pth"))
